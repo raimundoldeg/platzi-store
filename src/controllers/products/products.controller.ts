@@ -9,22 +9,23 @@ import {
   Query,
   HttpStatus,
   HttpCode,
-  Res,
+  ValidationPipe,
 } from '@nestjs/common';
 
-import { Response } from 'express';
+import { ProductsService } from 'src/services/products/products.service';
 
+import { CreateProductDto, UpdateProductDto } from '../../dtos/product.dto';
 @Controller('products')
 export class ProductsController {
+  constructor(private productsService: ProductsService) {}
+
   @Get('')
   getAll(
     @Query('limit') limit = 100,
     @Query('offset') offset = 50,
     @Query('brand') brand: string,
   ) {
-    return {
-      message: `products => limit:${limit}, offset: ${offset}, brand: ${brand}`,
-    };
+    return this.productsService.findAll();
   }
 
   @Get('filter')
@@ -36,26 +37,21 @@ export class ProductsController {
 
   @Get(':prodId')
   @HttpCode(HttpStatus.ACCEPTED)
-  getSingle(@Res() response: Response, @Param('prodId') prodId: string) {
-    response.status(200).send({
-      message: `product ${prodId}`,
-    });
+  getSingle(@Param('prodId', ValidationPipe) prodId: string) {
+    return this.productsService.findSingle(prodId);
   }
 
   @Post('')
-  createSingle(@Body() payload: any) {
-    return {
-      message: `this creates a single product`,
-      payload,
-    };
+  createSingle(@Body() payload: CreateProductDto) {
+    return this.productsService.create(payload);
   }
 
   @Put(':prodId')
-  updateSingle(@Param('prodId') prodId: string, @Body() payload: any) {
-    return {
-      prodId,
-      payload,
-    };
+  updateSingle(
+    @Param('prodId') prodId: string,
+    @Body() payload: UpdateProductDto,
+  ) {
+    return this.productsService.updateSingle(prodId, payload);
   }
 
   @Delete(':prodId')
